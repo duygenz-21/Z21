@@ -1,0 +1,22 @@
+async function handleActivateLicense() {
+    const key = document.getElementById('licenseKeyInput').value.trim();
+    if (!key) return alert('Vui lòng nhập Key!');
+    
+    const btn = document.querySelector('button[onclick="handleActivateLicense()"]');
+    const originHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    const result = await validateLicenseKey(key);
+    btn.innerHTML = originHTML;
+    
+    if (result.valid) {
+        localStorage.setItem('license_key', key);
+        localStorage.setItem('license_data', JSON.stringify({ expiresAt: result.expiresAt, daysLeft: result.daysLeft }));
+        await saveLicenseSecurely(key, { expiresAt: result.expiresAt, daysLeft: result.daysLeft });
+        alert(`✅ Kích hoạt thành công!\nCòn lại: ${result.daysLeft} ngày.`);
+        updateLicenseStatusDisplay();
+        renderHeaderStatus();
+    } else {
+        alert(`❌ ${result.message}`);
+    }
+}
