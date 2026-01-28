@@ -1,0 +1,6 @@
+function startNewChat() {
+    currentSessionId = 'session_' + new Date().getTime();
+    chatHistory = [{ role: "system", content: config.systemPrompt }];
+    messagesArea.innerHTML = WELCOME_HTML;
+    document.getElementById('historyPanel')?.classList.remove('active');
+}
