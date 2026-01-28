@@ -1,0 +1,22 @@
+function toggleSynthesisMode() {
+    window.isSynthesisMode = !window.isSynthesisMode;
+    const btn = document.getElementById('synthesisModeToggle');
+    const inputWrapper = document.querySelector('.input-wrapper');
+    const sendIcon = document.querySelector('#sendBtn i');
+    
+    if (window.isSynthesisMode) {
+        // Tắt các chế độ ưu tiên thấp hơn
+        if (window.isDebateMode) toggleDebateMode();
+        if (config.isSquadMode) toggleSquadMode();
+        
+        btn.classList.add('synthesis-active');
+        inputWrapper.style.borderColor = "#fbbf24"; 
+        document.getElementById('userInput').placeholder = "⚗️ Nhập vấn đề cần hội tụ tri thức...";
+        sendIcon.className = "fas fa-flask";
+    } else {
+        btn.classList.remove('synthesis-active');
+        inputWrapper.style.borderColor = "#334155";
+        document.getElementById('userInput').placeholder = "Nhập tin nhắn...";
+        sendIcon.className = "fas fa-paper-plane";
+    }
+}
