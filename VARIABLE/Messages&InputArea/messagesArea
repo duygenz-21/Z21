@@ -1,0 +1,16 @@
+// --- DOM Elements Declaration ---
+const messagesArea = document.getElementById('messagesArea');           // 1. Vùng chat
+const suggestionChips = document.getElementById('suggestionChips');     // 2. Gợi ý (Nếu có logic render)
+const filePreview = document.getElementById('filePreview');             // 3. Khung xem trước file
+const fileName = document.getElementById('fileName');                   // 4. Tên file
+const ragStatus = document.getElementById('ragStatus');                 // 5. Container RAG
+const ragStatusText = document.getElementById('ragStatusText');         // 6. Text trạng thái RAG
+const ragProgressPercent = document.getElementById('ragProgressPercent'); // 7. % RAG
+const ragProgressBar = document.getElementById('ragProgressBar');       // 8. Thanh RAG
+const typingIndicator = document.getElementById('typingIndicator');     // 9. Chỉ báo đang nhập
+const typingText = document.getElementById('typingText');               // 10. Text chỉ báo (nếu cần)
+const structureSelector = document.getElementById('structureSelector'); // 11. Chọn cấu trúc
+const fileInput = document.getElementById('fileInput');                 // 12. Input file
+const userInput = document.getElementById('userInput');                 // 13. Ô nhập liệu
+const sendBtn = document.getElementById('sendBtn');                     // 14. Nút gửi
+const stopBtn = document.getElementById('stopBtn');                     // 15. Nút dừng
