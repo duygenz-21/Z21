@@ -1,0 +1,11 @@
+function addSelectedModel() {
+    const select = document.getElementById('newModelSelect');
+    const val = select.value;
+    if (val && !config.models.includes(val)) {
+        config.models.push(val);
+        renderModelList();
+        select.value = '';
+    } else if (val && config.models.includes(val)) {
+        alert('Model đã tồn tại trong danh sách!');
+    }
+}
