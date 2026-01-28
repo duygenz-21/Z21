@@ -1,6 +1,9 @@
 function toggleSquadMode() { 
-    config.isSquadMode = !config.isSquadMode; [span_1](start_span)//[span_1](end_span)
-    if(config.isSquadMode) squadModeToggle.classList.add('active'); [span_2](start_span)//[span_2](end_span)
-    else squadModeToggle.classList.remove('active'); [span_3](start_span)//[span_3](end_span)
-    renderHeaderStatus(); [span_4](start_span)//[span_4](end_span)
+    config.isSquadMode = !config.isSquadMode; 
+    if(config.isSquadMode) {
+        squadModeToggle.classList.add('active'); 
+    } else {
+        squadModeToggle.classList.remove('active');
+    }
+    renderHeaderStatus();
 }
