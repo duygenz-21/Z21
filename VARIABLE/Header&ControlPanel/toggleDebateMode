@@ -1,0 +1,26 @@
+window.isDebateMode = false; // Biến cờ nằm ngay trên hàm
+function toggleDebateMode() {
+    window.isDebateMode = !window.isDebateMode;
+    const btn = document.getElementById('debateModeToggle');
+    const inputWrapper = document.querySelector('.input-wrapper');
+    const sendIcon = document.querySelector('#sendBtn i');
+    
+    if (window.isDebateMode) {
+        btn.classList.add('debate-active'); 
+        inputWrapper.classList.add('debate-mode-active');
+        userInput.placeholder = "⚔️ Nhập chủ đề tranh biện...";
+        userInput.focus();
+    
+        if (config && config.isSquadMode) {
+            config.isSquadMode = false;
+            document.getElementById('squadModeToggle').classList.remove('active');
+            renderHeaderStatus();
+        }
+        sendIcon.className = "fas fa-gavel";
+    } else {
+        btn.classList.remove('debate-active');
+        inputWrapper.classList.remove('debate-mode-active');
+        userInput.placeholder = "Nhập tin nhắn...";
+        sendIcon.className = "fas fa-paper-plane";
+    }
+}
