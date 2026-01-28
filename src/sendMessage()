@@ -1,0 +1,182 @@
+async function sendMessage() {
+    let text = userInput.value.trim();
+    if (!text && !currentFileContent && pendingVisionImages.length === 0) return;
+
+    // 1. Tăng biến đếm cộng dồn
+    messageCounter++;
+    localStorage.setItem('security_msg_counter', messageCounter.toString());
+
+    // 2. LOGIC CHECK GIÃN CÁCH (Xóa sạch đoạn cũ, dán đoạn này vào)
+    if (messageCounter >= securityState.nextCheckAt) {      
+        
+        // Gọi hàm kiểm tra ngầm License với Server
+        performSilentSecurityCheck();
+
+        // Tính toán mốc tiếp theo theo cấp số cộng (Ví dụ: +5, +10, +15...)
+        securityState.currentGap += 5; 
+        securityState.nextCheckAt = messageCounter + securityState.currentGap;
+
+        // Lưu trạng thái để khi F5 không bị reset lại mốc check
+        localStorage.setItem('sec_next_check', securityState.nextCheckAt.toString());
+        localStorage.setItem('sec_current_gap', securityState.currentGap.toString());
+        
+        console.log(`🕵️ Security: Lần check tới tại tin thứ ${securityState.nextCheckAt}`);
+    }
+
+    // Check License
+    let featureType = 'chat';
+    if (window.isDebateMode) featureType = 'debate';
+    else if (window.isSynthesisMode) featureType = 'synthesis';
+    else if (pendingVisionImages.length > 0) featureType = 'vision';
+    else if (config.isSquadMode) featureType = 'squad';
+
+    const permission = checkFeaturePermission(featureType);
+    if (!permission.allowed) {
+        alert(permission.message);
+        return; 
+    }
+
+    // Routing
+    if (window.isDebateMode) {
+        startDebateSystem(text);
+        return;
+    }
+    if (window.isSynthesisMode) {
+        startSynthesisSystem(text);
+        return;
+    }
+    
+    userInput.value = "";
+    userInput.style.height = 'auto';
+    setGeneratingState(true);
+    let displayHtml = text;
+
+    // Vision Mode
+    if (pendingVisionImages.length > 0) {
+        displayHtml += `<br><span class="text-xs text-yellow-400">[Chế độ: AI Agent Phân tích ảnh]</span>`;
+        displayHtml += `<div class="flex gap-2 mt-2 overflow-x-auto">`;
+        pendingVisionImages.forEach(img => {
+            displayHtml += `<img src="${img}" class="h-12 w-auto rounded border border-slate-600">`;
+        });
+        displayHtml += `</div>`;
+        appendUserMessage(text, displayHtml);
+    
+        const mainModel = config.models[0];
+        const visionModel = config.visionModel;
+        const responseGroup = createResponseGroup();
+    
+        const statusId = createAiCard(responseGroup, "System Agent");
+        const updateStatus = (msg) => {
+            const el = document.getElementById(statusId);
+            if(el) el.innerHTML = `<i class="fas fa-cog fa-spin text-yellow-400"></i> ${msg}`;
+        };
+    
+        try {
+            updateStatus("AI đang phân tích câu hỏi để chỉ đạo Vision...");
+            const directorPrompt = `
+            Bạn là một trợ lý AI thông minh (Director).
+            Người dùng vừa gửi một hình ảnh kèm câu hỏi: "${text || 'Hãy phân tích ảnh này'}".
+            Nhiệm vụ: Hãy viết một câu lệnh (Prompt) thật cụ thể và trước câu hỏi nhớ thêm cụm từ "hãy phân tích hình ảnh " để AI bên ngoài trả lời và bạn sưu tập câu trả lời cho khớp với ý của tôi nhé và phải rõ ràng bằng tiếng Anh gửi cho AI Vision để nó trích xuất thông tin cần thiết nhất từ ảnh.
+            Chỉ trả về nội dung câu lệnh (Prompt).`;
+            
+            const visionInstruction = await runSingleDebateTurn(mainModel, [{role: "user", content: directorPrompt}], statusId);
+            if(abortControllers.length === 0) throw new Error("Đã dừng bởi người dùng.");
+    
+            updateStatus(`Vision đang soi ảnh...`);
+            const visionContent = [
+                { type: "text", text: visionInstruction },
+                ...pendingVisionImages.map(img => ({ type: "image_url", image_url: { url: img } }))
+            ];
+            const visionAnalysis = await runSingleDebateTurn(visionModel, [{role: "user", content: visionContent}], statusId);
+            if(abortControllers.length === 0) throw new Error("Đã dừng bởi người dùng.");
+    
+            updateStatus("AI đang tổng hợp câu trả lời cuối cùng...");
+            
+            const statusCard = document.getElementById(statusId).closest('.ai-card');
+            if(statusCard) statusCard.remove();
+    
+            const finalPrompt = `
+            Thông tin gốc từ người dùng: "${text}"
+            Kết quả phân tích hình ảnh từ Vision AI: """${visionAnalysis}"""
+            Dựa vào thông tin trên, hãy trả lời câu hỏi của người dùng.`;
+    
+            await runStream(mainModel, [...chatHistory, {role: "user", content: finalPrompt}], responseGroup);
+    
+        } catch (e) {
+            console.error("Lỗi Vision:", e);
+            let el = document.getElementById(statusId);
+            if (!el) appendUserMessage("System Error", `<span class="text-red-400">Lỗi quy trình: ${e.message}</span>`);
+            else el.innerHTML = `<span class="text-red-400">Lỗi: ${e.message}</span>`;
+        }
+        setGeneratingState(false);
+        return; 
+    }
+
+    // Chat / RAG Mode
+    let finalContext = null;
+    if (currentFileContent) {
+        if (currentFileContent.length > 5000) {
+            const smartKeywords = await extractSmartKeywords(text, config.models[0]);
+            finalContext = await getRelevantContextWithStatus(smartKeywords, currentFileContent);
+            displayHtml += `<div class="mt-2 text-[10px] text-blue-400 bg-slate-800/50 p-2 rounded border border-blue-500/30">
+                <div class="font-bold text-yellow-400 mb-1"><i class="fas fa-search"></i> SMART RAG Active:</div>
+                <div class="italic opacity-80">${smartKeywords}</div>
+            </div>`;
+        } else {
+            finalContext = currentFileContent;
+            displayHtml += `<div class="mt-2 text-[10px] text-slate-500">${currentFileName} (Full Scan)</div>`;
+        }
+    }
+    
+        // --- [NEW] LOGIC XỬ LÝ CẤU TRÚC (Mindmap/Chart) ---
+    const structureSelect = document.getElementById('structureSelector');
+    const selectedStructure = structureSelect ? structureSelect.value : 'auto';
+    let structureInstruction = "";
+
+    if (selectedStructure !== 'auto') {
+        if (selectedStructure === 'freeplane') {
+             structureInstruction = `
+             \n[SYSTEM: FORMAT REQUIREMENTS]
+             User wants to export this to Freeplane/Mindmanager.
+             1. Use strict Markdown Headings (#, ##, ###) for hierarchy.
+             2. Use Bullet points (-) for leaf nodes.
+             3. Keep content concise and structured.`;
+        } else {
+            structureInstruction = `
+            \n[SYSTEM: VISUALIZATION REQUIRED]
+            User explicitly requests a **${selectedStructure.toUpperCase()}** using Mermaid.js.
+            1. Output a SINGLE valid Mermaid code block: \`\`\`mermaid ... \`\`\`
+            2. Do NOT explain the syntax, just draw it.
+            
+            Mapping:
+            - "mindmap" -> mermaid mindmap
+            - "flowchart" -> mermaid graph TD
+            - "timeline" -> mermaid timeline
+            - "fishbone" -> mermaid mindmap (spine structure)
+            - "matrix" -> mermaid quadrantChart
+            - "org" -> mermaid graph TD (subgraphs)
+            `;
+        }
+    }
+
+    // [EDIT] Ghép vào fullPrompt
+    let fullPrompt = text;
+    if (finalContext) fullPrompt = `=== CONTEXT ===\n${finalContext}\n=== END ===\n\nUSER: ${text} ${structureInstruction}`;
+    else fullPrompt = `${text} ${structureInstruction}`;  
+    
+    appendUserMessage(text, displayHtml);
+    chatHistory.push({ role: "user", content: fullPrompt });
+    saveSmartState();
+    if(chatHistory.length > 8) chatHistory = [chatHistory[0], ...chatHistory.slice(-7)];
+ 
+    const responseGroup = createResponseGroup();
+    abortControllers = [];
+ 
+    let activeModel = config.isSquadMode ? config.models : [config.models[0]];
+    let modelsToRun = Array.isArray(activeModel) ? activeModel : [activeModel];
+ 
+    const promises = modelsToRun.map(model => runStream(model, chatHistory, responseGroup));
+    await Promise.allSettled(promises);
+    setGeneratingState(false);
+    renderHeaderStatus();
+}
