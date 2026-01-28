@@ -1,25 +1,26 @@
 function toggleDebateMode() {
-    window.isDebateMode = !window.isDebateMode; [span_6](start_span)//[span_6](end_span)
-    const btn = document.getElementById('debateModeToggle'); [span_7](start_span)//[span_7](end_span)
-    const inputWrapper = document.querySelector('.input-wrapper'); [span_8](start_span)//[span_8](end_span)
-    const sendIcon = document.querySelector('#sendBtn i'); [span_9](start_span)//[span_9](end_span)
+    window.isDebateMode = !window.isDebateMode;
+    const btn = document.getElementById('debateModeToggle');
+    const inputWrapper = document.querySelector('.input-wrapper');
+    const sendIcon = document.querySelector('#sendBtn i');
     
     if (window.isDebateMode) {
-        btn.classList.add('debate-active'); [span_10](start_span)//[span_10](end_span)
-        inputWrapper.classList.add('debate-mode-active'); [span_11](start_span)//[span_11](end_span)
-        userInput.placeholder = "⚔️ Nhập chủ đề tranh biện..."; [span_12](start_span)//[span_12](end_span)
-        userInput.focus(); [span_13](start_span)//[span_13](end_span)
-    
+        btn.classList.add('debate-active'); 
+        inputWrapper.classList.add('debate-mode-active');
+        userInput.placeholder = "⚔️ Nhập chủ đề tranh biện...";
+        userInput.focus();
+
+        // Tự động tắt Squad Mode nếu đang bật để tránh xung đột
         if (config && config.isSquadMode) {
-            config.isSquadMode = false; [span_14](start_span)//[span_14](end_span)
-            document.getElementById('squadModeToggle').classList.remove('active'); [span_15](start_span)//[span_15](end_span)
-            renderHeaderStatus(); [span_16](start_span)//[span_16](end_span)
+            config.isSquadMode = false;
+            document.getElementById('squadModeToggle').classList.remove('active');
+            renderHeaderStatus();
         }
-        sendIcon.className = "fas fa-gavel"; [span_17](start_span)//[span_17](end_span)
+        sendIcon.className = "fas fa-gavel";
     } else {
-        btn.classList.remove('debate-active'); [span_18](start_span)//[span_18](end_span)
-        inputWrapper.classList.remove('debate-mode-active'); [span_19](start_span)//[span_19](end_span)
-        userInput.placeholder = "Nhập tin nhắn..."; [span_20](start_span)//[span_20](end_span)
-        sendIcon.className = "fas fa-paper-plane"; [span_21](start_span)//[span_21](end_span)
+        btn.classList.remove('debate-active');
+        inputWrapper.classList.remove('debate-mode-active');
+        userInput.placeholder = "Nhập tin nhắn...";
+        sendIcon.className = "fas fa-paper-plane";
     }
 }
