@@ -1,0 +1,10 @@
+function addCustomModel() {
+    const val = document.getElementById('customModelInput').value.trim();
+    if (val && !config.models.includes(val)) {
+        config.models.push(val);
+        renderModelList();
+        document.getElementById('customModelInput').value = '';
+    } else if (val && config.models.includes(val)) {
+        alert('Model đã tồn tại trong danh sách!');
+    }
+}
