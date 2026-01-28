@@ -1,0 +1,6 @@
+function clearFile() { 
+    currentFileContent = null; 
+    pendingVisionImages = []; 
+    document.getElementById('fileInput').value = ''; 
+    document.getElementById('filePreview').classList.add('hidden'); 
+}
