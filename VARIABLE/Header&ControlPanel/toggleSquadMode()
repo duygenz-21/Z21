@@ -1,0 +1,6 @@
+function toggleSquadMode() { 
+    config.isSquadMode = !config.isSquadMode; 
+    if(config.isSquadMode) squadModeToggle.classList.add('active'); 
+    else squadModeToggle.classList.remove('active');
+    renderHeaderStatus();
+}
