@@ -1,0 +1,22 @@
+function renderHeaderStatus() {
+    const el = document.getElementById('headerStatus');
+    const firstModel = config.models[0] || 'None';
+    let displayModel = firstModel;
+    if (firstModel.includes('/')) displayModel = firstModel.split('/').pop();
+    
+    const licenseKey = localStorage.getItem('license_key');
+    let badge = '';
+    
+    if (licenseKey) {
+        const licenseData = JSON.parse(localStorage.getItem('license_data') || '{}');
+        const daysLeft = Math.ceil((new Date(licenseData.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+        badge = ` <span class="text-yellow-400 text-xs">👑VIP(${daysLeft}d)</span>`;
+    } else {
+        const remaining = LICENSE_CONFIG.FREE_CHAT_LIMIT - usageData.freeChatUsed;
+        badge = ` <span class="text-slate-400 text-xs">🆓(${remaining} left)</span>`;
+    }
+
+    el.innerHTML = config.isSquadMode 
+        ? `Squad Mode (${config.models.length})${badge}` 
+        : `Single: ${displayModel}${badge}`;
+}
