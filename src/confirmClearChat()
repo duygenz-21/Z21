@@ -1,6 +1,0 @@
-function confirmClearChat() { 
-    if(confirm("Xoá sạch sẽ?")) { 
-        messagesArea.innerHTML = WELCOME_HTML; 
-        chatHistory = [{role:"system", content:config.systemPrompt}]; 
-    } 
-}

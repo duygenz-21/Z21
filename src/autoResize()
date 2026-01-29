@@ -1,4 +1,0 @@
-function autoResize(t) { 
-    t.style.height = 'auto'; 
-    t.style.height = Math.min(t.scrollHeight, 120) + 'px'; 
-}

@@ -1,5 +1,0 @@
-function useSuggestion(t) { 
-    userInput.value = t; 
-    autoResize(userInput); 
-    userInput.focus(); 
-}

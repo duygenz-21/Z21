@@ -1,4 +1,0 @@
-function stopGeneration() { 
-    abortControllers.forEach(c => c.abort()); 
-    abortControllers = []; 
-}
