@@ -3,65 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mermaid AI Visualizer</title>
+    <title>Mermaid AI Visualizer 🧜‍♀️</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar với luồng làm việc từ trên xuống -->
-        <aside class="control-panel">
-            <header class="app-header">
-                <h1>🧜‍♀️ Mermaid AI</h1>
-            </header>
 
-            <!-- Phần 1: Code Editor -->
-            <section class="section">
-                <h3>📝 Mermaid Code</h3>
-                <textarea id="mermaidCode" placeholder="graph TD;\nA[Start] --> B[Sẵn sàng];" rows="8"></textarea>
-                <button id="renderBtn" class="btn">🎨 Render Diagram</button>
-            </section>
-
-            <!-- Phần 2: AI Controls -->
-            <section class="section">
-                <h3>🤖 AI Assistant</h3>
-                <textarea id="aiPrompt" placeholder="Yêu cầu AI chỉnh sửa sơ đồ..." rows="3"></textarea>
-                <div class="button-group">
-                    <button id="generateBtn" class="btn primary">✨ Generate with AI</button>
-                    <input type="file" id="fileInput" accept=".md,.mmd,.txt" class="file-input">
+    <div class="container">
+        <aside class="sidebar">
+            <h1>Mermaid AI 🧠</h1>
+            
+            <div class="card">
+                <h3>⚙️ Cấu hình OpenRouter</h3>
+                <input type="password" id="apiKey" placeholder="Nhập OpenRouter API Key">
+                <input type="text" id="model" placeholder="Model (vd: google/gemini-2.0-flash-exp)" value="google/gemini-2.0-flash-exp">
+                <div class="row">
+                    <input type="number" id="topP" placeholder="Top P" value="0.9" step="0.1">
+                    <input type="number" id="temperature" placeholder="Temp" value="0.7" step="0.1">
                 </div>
-            </section>
+                <button id="saveConfigBtn">Lưu Cấu hình 💾</button>
+            </div>
 
-            <!-- Phần 3: Configuration (có thể collapse) -->
-            <section class="section config-section">
-                <h3>⚙️ Configuration</h3>
-                <div class="config-grid">
-                    <input type="password" id="apiKey" placeholder="OpenRouter API Key">
-                    <input type="text" id="model" placeholder="Model" value="google/gemini-2.0-flash-exp">
-                    <div class="config-row">
-                        <input type="number" id="temperature" placeholder="Temp" value="0.7" step="0.1" min="0" max="1">
-                        <input type="number" id="topP" placeholder="Top P" value="0.9" step="0.1" min="0" max="1">
-                    </div>
-                </div>
-                <button id="saveConfigBtn" class="btn secondary">💾 Save Config</button>
-            </section>
+            <div class="card">
+                <h3>📂 File & Kịch bản</h3>
+                <input type="file" id="fileInput" accept=".md,.mmd,.txt">
+                <textarea id="aiPrompt" placeholder="Nhập yêu cầu cho AI (vd: Thêm node Login vào sơ đồ flow...)"></textarea>
+                <button id="generateBtn" class="primary-btn">✨ Nhờ AI vẽ thêm</button>
+            </div>
+            
+            <div class="card">
+                <h3>📝 Code hiện tại</h3>
+                <textarea id="mermaidCode" placeholder="Code Mermaid sẽ hiện ở đây..."></textarea>
+                <button id="renderBtn">Render thủ công 🎨</button>
+            </div>
         </aside>
 
-        <!-- Main Preview Area -->
-        <main class="preview-panel">
-            <div class="preview-container">
-                <div id="diagramContainer" class="mermaid-diagram">
-                    <!-- Diagram sẽ render ở đây -->
-                </div>
-                <div id="loading" class="status-message hidden">
-                    <div class="spinner"></div>
-                    <p>AI đang xử lý...</p>
-                </div>
-                <div id="errorLog" class="status-message error hidden"></div>
+        <main class="preview-area">
+            <div id="diagramContainer" class="mermaid">
+                graph TD;
+                A[Start] --> B[Sẵn sàng];
             </div>
+            <div id="loading" class="hidden">🤖 AI đang suy nghĩ...</div>
+            <div id="errorLog" class="hidden"></div>
         </main>
     </div>
 
     <script type="module" src="js/main.js"></script>
 </body>
-</html>
+                </html>
+                
