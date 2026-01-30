@@ -1,169 +1,95 @@
 // --- CONSTANTS & STATE ---
-const DEFAULT_CODE = `graph TD;
-    Start((Bắt đầu)) --> Process[Xử lý];
-    Process --> End((Kết thúc));
-    style Start fill:#f9f,stroke:#333,stroke-width:2px`;
-
+const DEFAULT_CODE = `graph TD;\n  Start((Bắt đầu)) --> Process[Xử lý];\n  Process --> End((Kết thúc));\n  style Start fill:#f9f,stroke:#333`;
 let currentCode = DEFAULT_CODE;
 
-// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Load API Key từ LocalStorage (Thay cho db.get_api_key)
+    // Load Settings
     const savedKey = localStorage.getItem('openai_api_key');
-    if (savedKey) {
-        document.getElementById('apiKeyInput').value = savedKey;
-    }
+    if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
 
-    // 2. Load History hoặc Default Code
     const savedHistory = localStorage.getItem('last_mermaid_code');
-    if (savedHistory) {
-        currentCode = savedHistory;
-    }
-    
-    // 3. Render lần đầu
+    if (savedHistory) currentCode = savedHistory;
+
     updateUI(currentCode);
-    
-    // 4. Cleanup check (Giả lập logic xóa cũ)
-    const lastCleanup = localStorage.getItem('last_cleanup_date');
-    const now = new Date().getTime();
-    if (!lastCleanup || now - lastCleanup > 30 * 24 * 60 * 60 * 1000) {
-        // Thực hiện cleanup ảo
-        localStorage.setItem('last_cleanup_date', now);
-        document.getElementById('cleanupMsg').classList.remove('hidden');
-    }
 });
 
-// --- CORE FUNCTIONS ---
+// --- UI LOGIC ---
+function toggleSettings() {
+    const modal = document.getElementById('settingsModal');
+    modal.classList.toggle('hidden');
+}
 
-// Lưu API Key
+function closeSettings(e) {
+    if (e.target.id === 'settingsModal') {
+        toggleSettings();
+    }
+}
+
+function updateParamsDisplay() {
+    document.getElementById('tempVal').innerText = document.getElementById('tempRange').value;
+    document.getElementById('topKVal').innerText = document.getElementById('topKRange').value;
+}
+
+function toggleCodeEditor() {
+    const panel = document.getElementById('codeEditorPanel');
+    panel.classList.toggle('hidden');
+    // Sync nội dung khi mở
+    if(!panel.classList.contains('hidden')) {
+        document.getElementById('mermaidCodeEditor').value = currentCode;
+    }
+}
+
+// --- CORE FUNCTIONS ---
 function saveApiKey() {
     const key = document.getElementById('apiKeyInput').value;
     localStorage.setItem('openai_api_key', key);
-    showToast('Đã lưu API Key vào trình duyệt!', '💾');
+    showToast('Đã lưu API Key!', '💾');
 }
 
-// Cập nhật giá trị thanh trượt
-function updateTempDisplay() {
-    document.getElementById('tempVal').innerText = document.getElementById('tempRange').value;
-}
-
-// Render Mermaid Diagram
 async function renderMermaid(code) {
     const container = document.getElementById('mermaidContainer');
-    const editor = document.getElementById('mermaidCodeEditor');
-    
-    // Update editor
-    editor.value = code;
-    
     try {
-        // Reset container để mermaid render lại
-        container.removeAttribute('data-mermaid-processed');
         container.innerHTML = `<div class="mermaid">${code}</div>`;
-        
-        // Gọi thư viện Mermaid để vẽ
-        await window.mermaid.run({
-            nodes: container.querySelectorAll('.mermaid')
-        });
+        await window.mermaid.run({ nodes: container.querySelectorAll('.mermaid') });
     } catch (e) {
-        container.innerHTML = `<div style="color:red">Lỗi hiển thị: ${e.message}</div>`;
+        container.innerHTML = `<div style="color:red; padding:20px">Lỗi hiển thị: ${e.message}</div>`;
     }
 }
 
-// Hàm cập nhật toàn bộ UI và lưu state
 function updateUI(code) {
     currentCode = code;
-    localStorage.setItem('last_mermaid_code', code); // Thay cho db.save_history
+    localStorage.setItem('last_mermaid_code', code);
     renderMermaid(code);
+    document.getElementById('mermaidCodeEditor').value = code;
 }
 
-// Xử lý chỉnh sửa thủ công (Textarea)
 function manualEdit() {
     const code = document.getElementById('mermaidCodeEditor').value;
     updateUI(code);
 }
 
-// Tải xuống file
-function downloadCode() {
-    const blob = new Blob([currentCode], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "diagram.mmd";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// Reset App
-function resetApp() {
-    if(confirm("Bạn có chắc muốn reset không?")) {
-        localStorage.removeItem('last_mermaid_code');
-        location.reload();
-    }
-}
-
-// --- FILE UPLOAD LOGIC ---
-function handleFileUpload() {
-    const fileInput = document.getElementById('fileUpload');
-    const file = fileInput.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        const ext = file.name.split('.').pop();
-        
-        const extracted = extractMermaidCode(text, ext);
-        if (extracted) {
-            updateUI(extracted);
-            showToast("Đã nhập dữ liệu thành công!", "📥");
-        } else {
-            showToast("Không tìm thấy nội dung hợp lệ!", "⚠️");
-        }
-    };
-    reader.readAsText(file);
-    // Reset input để có thể chọn lại file cũ nếu muốn
-    fileInput.value = '';
-}
-
-// Logic tách code (tương tự utils.extract_mermaid_code)
-function extractMermaidCode(text, extension) {
-    if (['md', 'markdown'].includes(extension)) {
-        const match = text.match(/```mermaid([\s\S]*?)```/);
-        return match ? match[1].trim() : null;
-    } else {
-        // Loại bỏ markdown nếu user copy thừa
-        return text.replace(/```mermaid/g, "").replace(/```/g, "").trim();
-    }
-}
-
-// --- AI SERVICE (Client-side Fetch) ---
+// --- AI SERVICE ---
 async function callAiUpdate() {
     const apiKey = document.getElementById('apiKeyInput').value;
     const userRequestInput = document.getElementById('userRequest');
     const userRequest = userRequestInput.value;
     const model = document.getElementById('modelSelect').value;
+    
+    // Lấy params mới
     const temp = parseFloat(document.getElementById('tempRange').value);
+    const topK = parseInt(document.getElementById('topKRange').value); // [Top K added]
 
     if (!userRequest) return;
     if (!apiKey) {
-        showToast("Vui lòng nhập API Key trong cài đặt!", "⚠️");
+        toggleSettings(); // Mở setting nếu chưa có key
+        showToast("Cần nhập API Key trước!", "⚠️");
         return;
     }
 
-    // UI Loading
     document.getElementById('spinner').classList.remove('hidden');
 
-    const systemPrompt = `
-    Bạn là một chuyên gia về Mermaid JS. Nhiệm vụ của bạn là cập nhật biểu đồ dựa trên yêu cầu của người dùng.
-    QUY TẮC TUYỆT ĐỐI:
-    1. Chỉ trả về mã Mermaid thuần túy.
-    2. KHÔNG bao gồm markdown (\\\`\\\`\\\`mermaid), không giải thích, không lời chào.
-    3. Giữ nguyên logic cũ, chỉ thêm hoặc sửa theo yêu cầu.
-    `;
-
-    const userContent = `Code hiện tại:\n${currentCode}\n\nYêu cầu thay đổi: ${userRequest}`;
+    const systemPrompt = `Bạn là chuyên gia Mermaid JS. CHỈ trả về code mermaid thuần túy. KHÔNG markdown.`;
+    const userContent = `Code cũ:\n${currentCode}\n\nYêu cầu: ${userRequest}`;
 
     try {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -178,25 +104,18 @@ async function callAiUpdate() {
                     { role: "system", content: systemPrompt },
                     { role: "user", content: userContent }
                 ],
-                temperature: temp
+                temperature: temp,
+                top_k: topK // Gửi tham số Top K
             })
         });
 
         const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error.message);
-        }
+        if (data.error) throw new Error(data.error.message);
 
-        let newCode = data.choices[0].message.content.trim();
-        // Clean data (giống python)
-        newCode = newCode.replace(/```mermaid/g, "").replace(/```/g, "").trim();
-        
+        let newCode = data.choices[0].message.content.replace(/```mermaid/g, "").replace(/```/g, "").trim();
         updateUI(newCode);
-        showToast("Cập nhật thành công!", "✨");
-        
-        // --- FEATURE REQUEST: CLEAR INPUT ---
-        userRequestInput.value = ""; 
+        showToast("Đã vẽ xong!", "✨");
+        userRequestInput.value = "";
 
     } catch (e) {
         showToast(`Lỗi: ${e.message}`, "❌");
@@ -205,18 +124,37 @@ async function callAiUpdate() {
     }
 }
 
-// --- HELPER UI FUNCTIONS ---
-function toggleExpander(header) {
-    const parent = header.parentElement;
-    parent.classList.toggle('collapsed');
-    parent.classList.toggle('open');
+// --- UTILS ---
+function downloadCode() {
+    const blob = new Blob([currentCode], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "diagram.mmd";
+    a.click(); URL.revokeObjectURL(url);
 }
 
-function showToast(message, icon = '') {
+function showToast(msg, icon) {
     const toast = document.getElementById('toast');
-    toast.innerHTML = `${icon} ${message}`;
+    toast.innerHTML = `${icon} ${msg}`;
     toast.classList.remove('hidden');
-    setTimeout(() => {
-        toast.classList.add('hidden');
-    }, 3000);
+    setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
+function handleFileUpload() {
+    const file = document.getElementById('fileUpload').files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        updateUI(e.target.result); // Simplified logic
+        showToast("Đã tải file!", "📂");
+        toggleSettings(); // Đóng modal sau khi chọn
+    };
+    reader.readAsText(file);
+}
+
+function resetApp() {
+    if(confirm("Xóa toàn bộ dữ liệu?")) {
+        localStorage.clear();
+        location.reload();
+    }
 }
