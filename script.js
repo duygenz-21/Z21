@@ -158,3 +158,35 @@ function resetApp() {
         location.reload();
     }
 }
+// --- PWA LOGIC ---
+let deferredPrompt;
+
+// 1. Đăng ký Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('Service Worker đã sẵn sàng!'))
+            .catch((err) => console.log('Lỗi SW:', err));
+    });
+}
+
+// 2. Bắt sự kiện cài đặt
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Hiện nút cài đặt
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) installBtn.classList.remove('hidden');
+});
+
+// 3. Hàm gọi khi bấm nút
+async function installPWA() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+        deferredPrompt = null;
+        document.getElementById('installBtn').classList.add('hidden');
+    }
+}
+
