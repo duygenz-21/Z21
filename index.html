@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Visualizer</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧜‍♀️</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        window.mermaid = mermaid;
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    </script>
+</head>
+<body>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <h2>⚙️ Cài đặt</h2>
+                
+                <div class="expander open">
+                    <div class="expander-header" onclick="toggleExpander(this)">
+                        <span>🔑 Cấu hình AI</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="expander-content">
+                        <label class="label">API Key</label>
+                        <input type="password" id="apiKeyInput" placeholder="sk-..." onchange="saveApiKey()">
+                        
+                        <label class="label">Model</label>
+                        <select id="modelSelect">
+                            <option value="deepseek/deepseek-v3.2">deepseek/deepseek-v3.2</option>
+                            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
+                            <option value="xiaomi/mimo-v2-flash">xiaomi/mimo-v2-flash</option>
+                            <option value="anthropic/claude-3-haiku">anthropic/claude-3-haiku</option>
+                        </select>
+
+                        <label class="label">Độ sáng tạo (<span id="tempVal">0.7</span>)</label>
+                        <input type="range" id="tempRange" min="0" max="2" step="0.1" value="0.7" oninput="updateTempDisplay()">
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <h3>📂 Tải Dữ liệu</h3>
+                <label class="file-upload-btn">
+                    Chọn file (md, txt, mmd...)
+                    <input type="file" id="fileUpload" accept=".md,.txt,.mmd,.py,.js" onchange="handleFileUpload()">
+                </label>
+
+                <div id="cleanupMsg" class="info-box hidden">🧹 Đã dọn dẹp dữ liệu cũ.</div>
+
+                <hr class="divider">
+
+                <button class="st-btn" onclick="resetApp()">🔄 Reset App</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="header-section">
+                <h1>🧜‍♀️ Mermaid Flow</h1>
+                <p class="caption">Biến ý tưởng thành hình ảnh ngay lập tức.</p>
+            </div>
+
+            <div class="result-bar">
+                <h3>👁️ Kết quả</h3>
+                <button class="st-btn download-btn" onclick="downloadCode()">⬇️ Tải Code</button>
+            </div>
+
+            <div class="mermaid-container" id="mermaidContainer">
+                </div>
+
+            <hr class="divider">
+
+            <h3>✏️ Chỉnh sửa với AI</h3>
+            <div class="chat-controls">
+                <input type="text" id="userRequest" placeholder="Ví dụ: Đổi màu node Bắt đầu thành màu xanh..." class="st-input">
+                <button id="sendBtn" class="st-btn primary-btn" onclick="callAiUpdate()">🚀 Gửi</button>
+            </div>
+            
+            <div id="toast" class="toast hidden">Thông báo</div>
+            
+            <div id="spinner" class="spinner-overlay hidden">
+                <div class="spinner"></div>
+                <div class="spinner-text">🤖 AI đang vẽ lại...</div>
+            </div>
+
+            <div class="expander collapsed" style="margin-top: 20px;">
+                <div class="expander-header" onclick="toggleExpander(this)">
+                    <span>🛠️ Xem Code Nguồn (Dev)</span>
+                    <span class="arrow">▶</span>
+                </div>
+                <div class="expander-content">
+                    <textarea id="mermaidCodeEditor" class="code-editor" spellcheck="false" oninput="manualEdit()"></textarea>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
